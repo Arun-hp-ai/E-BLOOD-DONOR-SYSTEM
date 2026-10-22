@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>E-Blood Donor System</title>
+<style>
+:root{--bg:#FBF6F5;--sf:#fff;--ink:#241619;--mut:#6D5A5E;--red:#B3122B;--on:#fff;--ln:#EBDCDE;--tint:#F7E4E7;--ok:#1B6B3A;--er:#A5122A;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#180F11;--sf:#241719;--ink:#F6EDEF;--mut:#BBA7AC;--red:#EF4A60;--on:#1A0A0D;--ln:#3C2A2E;--tint:#3A1D23;--ok:#5FD08A;--er:#FF8D9C}}
+:root[data-theme="dark"]{--bg:#180F11;--sf:#241719;--ink:#F6EDEF;--mut:#BBA7AC;--red:#EF4A60;--on:#1A0A0D;--ln:#3C2A2E;--tint:#3A1D23;--ok:#5FD08A;--er:#FF8D9C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:28px 18px 48px}
+h1{font:700 clamp(2rem,6vw,3rem)/1.05 Georgia,"Times New Roman",serif;margin:0 0 10px;letter-spacing:-.01em}
+h2{font:700 1.4rem/1.2 Georgia,"Times New Roman",serif;margin:0 0 4px}
+.lead{color:var(--mut);margin:0;max-width:52ch}
+.stat{margin:14px 0 0;font-size:.95rem;color:var(--mut)}
+section{margin-top:34px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.tile{font:inherit;background:var(--sf);color:var(--ink);border:1.5px solid var(--ln);border-radius:12px;padding:10px 4px;cursor:pointer;text-align:center;min-height:64px}
+.tile b{display:block;font:700 1.5rem/1.1 Georgia,"Times New Roman",serif}
+.tile span{font-size:.78rem;color:var(--mut)}
+.tile[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--on)}
+.tile[aria-pressed="true"] span{color:var(--on);opacity:.85}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+input,select{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:10px 12px;width:100%;min-height:44px}
+.search{flex:1 1 240px}
+label.chk{display:flex;gap:8px;align-items:center;font-size:.95rem;color:var(--mut);font-weight:400;margin:0}
+label.chk input{width:auto;min-height:0}
+:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.result-head{margin:16px 0 0;font-weight:600}
+.list{display:grid;gap:10px;margin-top:10px}
+.card{display:flex;gap:12px;align-items:center;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:12px}
+.bg{flex:none;width:52px;height:52px;border-radius:50%;background:var(--tint);color:var(--red);display:grid;place-items:center;font:700 1.15rem Georgia,"Times New Roman",serif}
+.info{flex:1;min-width:0}
+.info strong{display:block;overflow-wrap:anywhere}
+.info small{color:var(--mut);display:block;overflow-wrap:anywhere}
+.act{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.call{background:var(--red);color:var(--on);text-decoration:none;border-radius:10px;padding:8px 14px;font-weight:600;white-space:nowrap}
+.lnk{font:inherit;font-size:.82rem;background:none;border:0;color:var(--mut);text-decoration:underline;cursor:pointer;padding:2px}
+form{display:grid;gap:12px;margin-top:14px;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:16px}
+label{font-size:.9rem;font-weight:600;display:block;margin-bottom:4px}
+.btn{font:inherit;font-weight:700;background:var(--red);color:var(--on);border:0;border-radius:10px;padding:12px 18px;min-height:46px;cursor:pointer}
+.msg{margin:0;font-size:.95rem}
+.err{color:var(--er)}
+.ok{color:var(--ok)}
+.empty{padding:20px;border:1.5px dashed var(--ln);border-radius:14px;color:var(--mut)}
+.note{font-size:.85rem;color:var(--mut);margin:10px 0 0}
+@media(min-width:720px){
+.list{grid-template-columns:1fr 1fr}
+.tiles{grid-template-columns:repeat(8,1fr)}
+form{grid-template-columns:1fr 1fr}
+.full{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>E-Blood Donor System</h1>
+<p class="lead">Find a blood donor by group and location in seconds, or register to become one.</p>
+<p class="stat" id="stat"></p>
+</header>
+
+<section aria-labelledby="find">
+<h2 id="find">Find a donor</h2>
+<div class="tiles" id="tiles" role="group" aria-label="Blood group"></div>
+<div class="row">
+<div class="search">
+<label for="q" class="vh" style="position:absolute;left:-9999px">Search by name, city, district or state</label>
+<input id="q" type="search" placeholder="Search by name, city, district or state" autocomplete="off">
+</div>
+<label class="chk" id="compatWrap" hidden><input type="checkbox" id="compat"> Include compatible groups</label>
+</div>
+<p class="result-head" id="count" aria-live="polite"></p>
+<div class="list" id="list"></div>
+</section>
+
+<section aria-labelledby="reg">
+<h2 id="reg">Register as a donor</h2>
+<p class="lead">You must be 18 to 65 years old. Your phone number is shown to anyone who searches.</p>
+<form id="form" novalidate>
+<div><label for="name">Full name</label><input id="name" autocomplete="name"></div>
+<div><label for="grp">Blood group</label><select id="grp"></select></div>
+<div><label for="city">City</label><input id="city" autocomplete="address-level2"></div>
+<div><label for="district">District</label><input id="district"></div>
+<div><label for="state">State</label><input id="state" autocomplete="address-level1"></div>
+<div><label for="phone">Phone number</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel"></div>
+<div><label for="dob">Date of birth</label><input id="dob" type="date"></div>
+<div class="full">
+<p class="msg err" id="errs" role="alert"></p>
+<p class="msg ok" id="okmsg" role="status"></p>
+<button class="btn" type="submit">Register as donor</button>
+</div>
+</form>
+<p class="note">Entries are saved in this browser only, so other visitors won’t see them.</p>
+</section>
+</div>
+
+<script>
+(function(){
+var KEY="ebds_donors_v1";
+var G=["A+","A-","B+","B-","AB+","AB-","O+","O-"];
+var CAN={"A+":["A+","A-","O+","O-"],"A-":["A-","O-"],"B+":["B+","B-","O+","O-"],"B-":["B-","O-"],"AB+":G,"AB-":["AB-","A-","B-","O-"],"O+":["O+","O-"],"O-":["O-"]};
+var SEED=[
+{id:"s1",name:"Kumar",group:"A+",city:"Chennai",district:"Chennai",state:"Tamil Nadu",phone:"9876543210",dob:"1998-03-21"},
+{id:"s2",name:"Priya",group:"O-",city:"Madurai",district:"Madurai",state:"Tamil Nadu",phone:"9876509876",dob:"1995-11-11"},
+{id:"s3",name:"Rahul",group:"B+",city:"Coimbatore",district:"Coimbatore",state:"Tamil Nadu",phone:"7654321987",dob:"2000-07-15"},
+{id:"s4",name:"Meena",group:"AB+",city:"Salem",district:"Salem",state:"Tamil Nadu",phone:"9841200011",dob:"1992-02-02"},
+{id:"s5",name:"Arjun",group:"O+",city:"Chennai",district:"Chengalpattu",state:"Tamil Nadu",phone:"9841200022",dob:"1989-09-30"},
+{id:"s6",name:"Divya",group:"A-",city:"Trichy",district:"Tiruchirappalli",state:"Tamil Nadu",phone:"9841200033",dob:"1997-05-18"}
+];
+var donors=load(),sel="",q="",compat=false;
+function load(){try{var r=localStorage.getItem(KEY);if(r){var a=JSON.parse(r);if(Array.isArray(a))return a}}catch(e){}return SEED.map(function(x){return Object.assign({},x)})}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(donors))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function sh(g){return g.replace("-","\u2212")}
+function age(d){var b=new Date(d),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return a}
+var $=function(i){return document.getElementById(i)};
+
+function render(){
+$("stat").textContent=donors.length+" donor"+(donors.length===1?"":"s")+" registered";
+$("tiles").innerHTML=G.map(function(g){
+var n=donors.filter(function(d){return d.group===g}).length;
+return '<button type="button" class="tile" data-g="'+g+'" aria-pressed="'+(sel===g)+'" aria-label="Blood group '+sh(g)+', '+n+' donors"><b>'+sh(g)+'</b><span>'+n+" donor"+(n===1?"":"s")+"</span></button>"}).join("");
+$("compatWrap").hidden=!sel;
+var allowed=sel?(compat?CAN[sel]:[sel]):null;
+var words=q.toLowerCase().split(/\s+/).filter(Boolean);
+var res=donors.filter(function(d){
+if(allowed&&allowed.indexOf(d.group)<0)return false;
+var h=[d.name,d.city,d.district,d.state].join(" ").toLowerCase();
+return words.every(function(w){return h.indexOf(w)>=0})});
+var c=res.length;
+$("count").textContent=c+" donor"+(c===1?"":"s")+" found"+(sel?" for "+sh(sel)+(compat?" and compatible groups":""):"");
+$("list").innerHTML=c?res.map(function(d){
+return '<article class="card"><div class="bg" aria-hidden="true">'+sh(esc(d.group))+'</div><div class="info"><strong>'+esc(d.name)+'</strong><small>'+esc(d.city)+", "+esc(d.district)+", "+esc(d.state)+'</small><small>Group '+sh(esc(d.group))+", age "+age(d.dob)+'</small></div><div class="act"><a class="call" href="tel:'+esc(d.phone.replace(/[^\d+]/g,""))+'">Call</a><button type="button" class="lnk" data-rm="'+esc(d.id)+'">Remove</button></div></article>'}).join("")
+:'<div class="empty">No donors match your search. Try a nearby city, clear the blood group, or include compatible groups.</div>';
+}
+
+$("tiles").addEventListener("click",function(e){var b=e.target.closest(".tile");if(!b)return;var g=b.getAttribute("data-g");sel=sel===g?"":g;if(!sel)compat=false,$("compat").checked=false;render()});
+$("q").addEventListener("input",function(e){q=e.target.value;render()});
+$("compat").addEventListener("change",function(e){compat=e.target.checked;render()});
+$("list").addEventListener("click",function(e){
+var b=e.target.closest("[data-rm]");if(!b)return;
+if(b.getAttribute("data-armed")){donors=donors.filter(function(d){return d.id!==b.getAttribute("data-rm")});save();render();return}
+b.setAttribute("data-armed","1");b.textContent="Confirm remove";
+setTimeout(function(){if(b.isConnected){b.removeAttribute("data-armed");b.textContent="Remove"}},3000)});
+
+$("grp").innerHTML='<option value="">Select blood group</option>'+G.map(function(g){return'<option value="'+g+'">'+sh(g)+"</option>"}).join("");
+var t=new Date(),iso=function(y){return new Date(t.getFullYear()-y,t.getMonth(),t.getDate()).toISOString().slice(0,10)};
+$("dob").max=iso(18);$("dob").min=iso(65);
+
+$("form").addEventListener("submit",function(e){
+e.preventDefault();
+var v=function(i){return $(i).value.trim()},er=[];
+var d={id:"u"+Date.now(),name:v("name"),group:v("grp"),city:v("city"),district:v("district"),state:v("state"),phone:v("phone").replace(/[\s-]/g,""),dob:v("dob")};
+if(d.name.length<2)er.push("Enter your full name.");
+if(!d.group)er.push("Select your blood group.");
+if(!d.city||!d.district||!d.state)er.push("Enter your city, district and state.");
+if(!/^\+?\d{10,13}$/.test(d.phone))er.push("Enter a valid phone number with 10 to 13 digits.");
+else if(donors.some(function(x){return x.phone===d.phone}))er.push("This phone number is already registered.");
+if(!d.dob)er.push("Enter your date of birth.");
+else{var a=age(d.dob);if(isNaN(a)||a<18||a>65)er.push("Donors must be between 18 and 65 years old.")}
+$("okmsg").textContent="";
+if(er.length){$("errs").textContent=er.join(" ");return}
+$("errs").textContent="";
+donors.unshift(d);save();
+sel="";q="";compat=false;$("q").value="";$("compat").checked=false;
+render();$("form").reset();
+$("okmsg").textContent="Registered. "+d.name+" is now listed as a "+sh(d.group)+" donor.";
+});
+render();
+})();
+</script>
+</body>
+</html>
